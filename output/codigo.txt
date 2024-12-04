@@ -1,0 +1,5 @@
+hola x = 10;
+si (x > 5 ){
+    x = x - 1;
+}
+retorno x;
