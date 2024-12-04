@@ -1,4 +1,4 @@
-hola x = 10;
+hola x = verdadero;
 si (x > 5 ){
     x = x - 1;
 }
