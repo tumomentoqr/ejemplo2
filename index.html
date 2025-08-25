@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Luna</title>
+    <audio id="bgMusic" loop>
+      <source src="saiko.mp3" type="audio/mpeg" />
+      <source src="saiko.ogg" type="audio/ogg" />
+    </audio>
+
+    <div class="music-player">
+      <button id="musicToggle" aria-label="Reproducir/Pausar música">🎵</button>
+      <input
+        type="range"
+        id="volumeControl"
+        min="0"
+        max="1"
+        step="0.1"
+        value="0.5"
+        aria-label="Control de volumen"
+        title="Ajustar volumen"
+      />
+    </div>
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #fdeef4 0%, #dfa95c 100%);
+        overflow: hidden;
+        position: relative;
+      }
+
+      .background-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        gap: 1rem;
+        padding: 20px;
+        overflow: auto;
+      }
+
+      .background-image {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        opacity: 0.8;
+        transition: opacity 0.3s ease;
+        aspect-ratio: 19/16;
+      }
+
+      .background-image:hover {
+        opacity: 1;
+      }
+
+      /* Posicionamiento específico para cada imagen */
+      .background-image:nth-child(1) {
+        grid-column: 1;
+        grid-row: 1;
+      }
+
+      .background-image:nth-child(2) {
+        grid-column: 3;
+        grid-row: 1;
+      }
+
+      .background-image:nth-child(3) {
+        grid-column: 1;
+        grid-row: 2;
+      }
+
+      .background-image:nth-child(4) {
+        grid-column: 3;
+        grid-row: 2;
+      }
+
+      .background-image:nth-child(5) {
+        grid-column: 2;
+        grid-row: 1;
+        opacity: 0.8;
+      }
+      .background-image:nth-child(6) {
+        grid-column: 1;
+        grid-row: 3;
+      }
+      .background-image:nth-child(7) {
+        grid-column: 3;
+        grid-row: 3;
+      }
+      .background-image:nth-child(8) {
+        grid-column: 2;
+        grid-row: 3;
+      }
+
+      .container {
+        position: relative;
+        display: flex;
+        justify-content: center;
+
+        perspective: 1000px;
+        z-index: 1;
+      }
+
+      .envelope {
+        font-family: 'Courier New', Courier, monospace;
+        position: relative;
+        width: 400px;
+        height: 250px;
+        background: #573010;
+        border-radius: 15px;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        transform-style: preserve-3d;
+        transform-origin: bottom;
+        transition: all 0.5s ease-in-out;
+        cursor: pointer;
+      }
+
+      .envelope:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          45deg,
+          rgba(255, 255, 255, 0.1) 0%,
+          rgba(255, 255, 255, 0) 100%
+        );
+        border-radius: 15px;
+      }
+
+      .envelope.open {
+        transform: rotateX(-180deg);
+        background: #57301080; /* Color base con transparencia */
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); /* Sombra más suave */
+      }
+
+      .front {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+      }
+
+      .message {
+        text-align: center;
+        color: white;
+        font-size: 20px;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+      }
+
+      .stamp {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        background: white;
+        border-radius: 8px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .heart {
+        font-size: 30px;
+        color: #ff4b4b;
+        animation: beat 1s infinite;
+      }
+
+      @keyframes beat {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.2);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: #573010a0;
+        border-radius: 15px;
+        backface-visibility: hidden;
+        transform: rotateX(180deg);
+      }
+
+      .letter {
+        position: absolute;
+        width: 350px;
+
+        background: rgba(255, 255, 255, 0.641);
+        border-radius: 15px;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+
+        transform: translateY(80%);
+        opacity: 0;
+        transition: all 1s ease-in-out;
+        text-align: center;
+      }
+
+      .letter.show {
+        transform: translateY(-180px);
+        opacity: 1;
+      }
+
+      .envelope:hover {
+        transform: translateY(-5px) rotateX(0deg);
+      }
+
+      .envelope.open:hover {
+        transform: translateY(-5px) rotateX(-180deg);
+      }
+
+      .letter-content {
+        font-size: 18px;
+        line-height: 1.6;
+        color: #333;
+      }
+
+      .letter-hearts {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+      }
+
+      .floating-heart {
+        position: absolute;
+        font-size: 20px;
+        color: #ff4b4b;
+        animation: float 3s ease-in infinite;
+        opacity: 0;
+      }
+
+      @keyframes float {
+        0% {
+          transform: translateY(0) rotate(0deg);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(-100px) rotate(360deg);
+          opacity: 0;
+        }
+      }
+
+      /* Responsiveness */
+
+      @media (max-width: 768px) {
+        .letter-content {
+          font-size: 16px;
+          line-height: 1.7;
+          padding: 15px;
+        }
+
+        .letter-content p {
+          margin-bottom: 1.2em;
+          text-indent: 1em;
+        }
+        .envelope {
+          width: 90vw; /* Usa el ancho de la ventana como referencia */
+          max-width: 320px; /* Límite máximo para pantallas grandes */
+          height: 60vw; /* Proporción 1:1.6 */
+          max-height: 450px;
+          margin: 0 5%; /* Márgenes laterales */
+        }
+        .stamp {
+          top: 10px;
+          right: 10px;
+          width: 40px;
+          height: 40px;
+        }
+
+        .message {
+          font-size: 1rem !important;
+        }
+
+        .letter-content {
+          font-size: 0.8rem;
+        }
+        /* Contenedor de imágenes */
+        .background-container {
+          grid-template-columns: repeat(3, 1fr);
+          grid-template-rows: repeat(3, 1fr);
+          gap: 5px;
+          padding: 5px;
+        }
+
+        .background-image {
+          .polaroid {
+            padding: 8px;
+          }
+
+          .message-text {
+            font-size: 1.2rem;
+          }
+
+          .collage-container {
+            height: 500px;
+          }
+        }
+      }
+      @media (max-width: 480px) {
+        .envelope {
+          width: 85vw;
+          height: 55vw;
+          margin: 0 7%;
+        }
+
+        .message {
+          font-size: 0.9rem !important;
+        }
+
+        .letter {
+          width: 90vw !important;
+          max-width: 300px;
+        }
+        .letter-content {
+          font-size: 15px;
+          line-height: 1.5;
+          padding: 9px;
+        }
+
+        .letter-content h2 {
+          font-size: 1.4em;
+          margin-bottom: 20px;
+        }
+        .letter {
+          width: 90vw !important; /* Ajuste final de ancho */
+        }
+      }
+      .music-player {
+        position: absolute;
+
+        bottom: 20px;
+
+        z-index: 999;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 0px;
+        border-radius: 25px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      #musicToggle {
+        border: none;
+        background: none;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 5px;
+      }
+
+      #volumeControl {
+        width: 80px;
+        height: 5px;
+        accent-color: #573010;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Background images container -->
+    <div class="background-container">
+      <img src="imagenes/1.jpg" class="background-image" alt="Background 1" />
+      <img src="imagenes/2.jpg" class="background-image" alt="Background 2" />
+      <img src="imagenes/3.jpg" class="background-image" alt="Background 3" />
+      <img src="imagenes/4.jpg" class="background-image" alt="Background 4" />
+      <img src="imagenes/5.jpg" class="background-image" alt="Background 5" />
+      <img src="imagenes/6.jpg" class="background-image" alt="Background 6" />
+      <img src="imagenes/7.jpg" class="background-image" alt="Background 7" />
+      <img src="imagenes/8.jpg" class="background-image" alt="Background 8" />
+    </div>
+
+    <div class="container">
+      <div class="envelope" id="envelope">
+        <div class="front">
+          <div class="message">
+            <p>Para la niña más bonita que existe.</p>
+          </div>
+          <div class="stamp">
+            <div class="heart">🤎</div>
+          </div>
+        </div>
+        <div class="back"></div>
+      </div>
+      <div class="letter" id="letter">
+        <div class="letter-content">
+          <h2>❤️🎉 ¡Feliz Aniversario, Mi Amor! 🎊❤️</h2>
+          <p>
+            Hoy celebramos otro año juntos, y no puedo evitar recordar cada
+            momento maravilloso que hemos compartido. Eres mi compañera de vida,
+            mi confidente y mi mayor alegría. Cada día a tu lado me enseña que
+            el amor verdadero existe y se fortalece con el tiempo.
+          </p>
+          <p>
+            Me haces tan feliz con tu sonrisa, tu ternura y esa forma única que
+            tienes de entender hasta mis silencios. Eres la persona con la que
+            quiero despertar cada mañana y con la que anhelo envejecer.
+          </p>
+          <p>
+            Gracias por este año increíble lleno de aprendizajes, risas y amor.
+            ¡Que vengan muchos años más a tu lado!
+          </p>
+          <p>Con todo mi amor, hoy y siempre. ❤️</p>
+        </div>
+        <div class="letter-hearts" id="hearts"></div>
+      </div>
+    </div>
+
+    <script>
+      const envelope = document.getElementById('envelope');
+      const letter = document.getElementById('letter');
+      const heartsContainer = document.getElementById('hearts');
+      let isOpen = false;
+      envelope.addEventListener('click', () => {
+        if (!isOpen) {
+          // Abrir carta
+          envelope.classList.add('open');
+          setTimeout(() => {
+            letter.classList.add('show');
+            createFloatingHearts();
+          }, 1000);
+          isOpen = true;
+        } else {
+          // Cerrar carta
+          envelope.classList.remove('open');
+          letter.classList.remove('show');
+          isOpen = false;
+
+          // Limpiar corazones
+          heartsContainer.innerHTML = '';
+        }
+      });
+
+      function createFloatingHearts() {
+        for (let i = 0; i < 15; i++) {
+          setTimeout(() => {
+            const heart = document.createElement('div');
+            heart.className = 'floating-heart';
+            heart.innerHTML = '❤️';
+            heart.style.left = Math.random() * 100 + '%';
+            heart.style.animationDelay = Math.random() * 2 + 's';
+            heartsContainer.appendChild(heart);
+
+            setTimeout(() => {
+              heart.remove();
+            }, 3000);
+          }, i * 200);
+        }
+      }
+      const music = document.getElementById('bgMusic');
+      const toggleButton = document.getElementById('musicToggle');
+      const volumeControl = document.getElementById('volumeControl');
+
+      // Controlador para el botón de música
+      toggleButton.addEventListener('click', () => {
+        if (music.paused) {
+          music.play();
+          toggleButton.textContent = '🎵';
+        } else {
+          music.pause();
+          toggleButton.textContent = '🔇';
+        }
+      });
+
+      // Controlador de volumen
+      volumeControl.addEventListener('input', (e) => {
+        music.volume = e.target.value;
+      });
+
+      // Iniciar música después de la interacción del usuario
+      document.body.addEventListener(
+        'click',
+        function initMusic() {
+          music.play();
+          music.volume = 0.5;
+          document.body.removeEventListener('click', initMusic);
+        },
+        { once: true }
+      );
+    </script>
+  </body>
+</html>

@@ -1,9 +1,0 @@
-entero x = 10; 
-si (x > 5) { 
-    x = x - 1; 
-} 
-cadena texto = "Hola"; 
-si (texto) { 
-    x = "cadena"; 
-} 
-retorno x;
